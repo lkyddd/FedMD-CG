@@ -50,6 +50,7 @@ We select some important files for detailed description.
 ## Run pipeline for Run pipeline for FedMD-CG
 1. Entering the FedMD-CG
 ```python
+cd LightFed
 cd experiments
 cd horizontal
 cd FedMD-CG
@@ -61,6 +62,7 @@ python main_FedMDCG.py --data_partition_mode non_iid_dirichlet_balanced --non_ii
 ```
 And you can run other baselines, such as 
 ```python
+cd LightFed
 cd experiments
 cd horizontal
 cd fedavg
