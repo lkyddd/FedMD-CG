@@ -39,7 +39,7 @@ class ClientTrainer:
 
         self.init_loss_fn()
 
-        self.cache_dataset = [] ##用于计算没有重复batch的数据集
+        self.cache_dataset = [] ##
         self.res = {}
 
         set_seed(args.seed + 657)
@@ -95,8 +95,6 @@ class ClientTrainer:
         torch.cuda.empty_cache()
 
     def train_locally_step(self, I, step, label_num, latent_layer_idx):
-        """算法的第5行
-        """
         # self.clean_up_counts()
         optimizer = torch.optim.SGD(params=self.model.parameters(), lr=self.lr_lm, weight_decay=self.weight_decay)
         # optimizer = torch.optim.Adam(params=self.model.parameters(), lr=self.lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=self.weight_decay, amsgrad=False)
@@ -114,7 +112,6 @@ class ClientTrainer:
                 self.model.zero_grad(set_to_none=True)
                 optimizer.zero_grad(set_to_none=True)
 
-                ##batch数据
                 x, y = next(self.train_batch_data_iter)
                 x = x.to(self.device)
                 y = y.to(self.device)
