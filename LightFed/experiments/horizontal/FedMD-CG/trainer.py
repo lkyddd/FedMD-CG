@@ -72,7 +72,7 @@ class ClientTrainer:
         self.MSE = nn.MSELoss()
         self.KL = nn.KLDivLoss(reduction="batchmean") #
         self.CE = nn.CrossEntropyLoss()
-        self.diversity_loss = DiversityLoss(metric='l2').to(self.device)  ##这里可以进行修改
+        self.diversity_loss = DiversityLoss(metric='l2').to(self.device)  ##
 
     def random_choice_y(self, batch_size, label_num):
         if len(label_num) > 0:
@@ -102,7 +102,7 @@ class ClientTrainer:
         with torch.no_grad():
             for name, weight in self.model.named_parameters():
                 _g = weight.grad.detach()
-                if 'bias' not in name:  # 不对偏置项进行正则化
+                if 'bias' not in name:  # 
                     _g += (weight * self.weight_decay).detach()
                 grad[name] = _g
         return grad
@@ -160,13 +160,13 @@ class ClientTrainer:
             print('lambda_kl_F:{:.4f}, lambda_mse_F:{:.4f}'.format(self._lambda_kl_F, self._lambda_mse_F))
 
         # self.clean_up_counts()
-        ##这个可以后续在调整
+        ##
         # generative_alpha = self.exp_lr_scheduler(self.step, decay=0.98, init_lr=self.generative_alpha)
         # generative_beta = self.exp_lr_scheduler(self.step, decay=0.98, init_lr=self.generative_beta)
 
         ###sample y and generate z
         for tau in range(I):
-            ##阶段1：利用生成器去增强本地训练
+            ##
             self.update_local_model()
             for _, y in self.cache_dataset:
                 eps = torch.rand((y.shape[0], self.generator_model.noise_dim))
@@ -176,7 +176,7 @@ class ClientTrainer:
 
     def update_local_model(self, ):
         self.model.train()
-        ##冻结模型，即在更新的时候不要计算其梯度，节省训练时间
+        ##
         grad_False(self.EMA_generator_model)
         L_CE, L_CE_G, L_KL_F, L_MSE_F, LOSS = 0, 0, 0, 0, 0
 
@@ -184,7 +184,7 @@ class ClientTrainer:
             self.model.zero_grad(set_to_none=True)
             self.lm_optimizer.zero_grad(set_to_none=True)
 
-            ##batch数据
+            ##
             x, y = next(self.train_batch_data_iter)
             x = x.to(self.device)
             y = y.to(self.device)
@@ -253,14 +253,12 @@ class ClientTrainer:
     def update_generator(self, ):
         self.generator_model.train()
         self.model.eval()
-        ##冻结模型，即在更新的时候不要计算其梯度，节省训练时间
         grad_True(self.generator_model)
         grad_False(self.model)
         L_CE_G, L_KL, L_MSE_G, L_DIV, LOSS = 0, 0, 0, 0, 0
         for _ in range(self.I_gg):
             self.generator_model.zero_grad(set_to_none=True)
             self.gen_optimizer.zero_grad(set_to_none=True)
-            ##batch数据
             for data, noise in zip(self.cache_dataset, self.cache_noise_dataset):
                 x, y = data[0], data[1]
 
