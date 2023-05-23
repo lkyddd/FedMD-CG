@@ -41,8 +41,6 @@ class ClientTrainer:
         torch.cuda.empty_cache()
 
     def train_locally_step(self, I, step):
-        """算法的第5行
-        """
         self.step = step
         self.lm_optimizer = torch.optim.SGD(params=self.model.parameters(), lr=self.lr_lm, weight_decay=self.weight_decay)
         # self.lm_optimizer = torch.optim.Adam(params=self.model.parameters(), lr=self.lr_lm, betas=(0.9, 0.999), eps=1e-08, weight_decay=self.weight_decay, amsgrad=False)
@@ -59,7 +57,7 @@ class ClientTrainer:
             self.model.zero_grad(set_to_none=True)
             self.lm_optimizer.zero_grad(set_to_none=True)
 
-            ##batch数据
+            ##batch
             x, y = next(self.train_batch_data_iter)
             x = x.to(self.device)
             y = y.to(self.device)
