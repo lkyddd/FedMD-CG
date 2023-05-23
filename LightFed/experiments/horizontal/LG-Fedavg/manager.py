@@ -20,10 +20,6 @@ from param_config import METRICS
 MIN_SAMPLES_PER_LABEL=1
 
 class ServerManager(BaseServer):
-    # 现在的server_role的作用是控制实验的初始化和进程
-    # 以及进行测试global模型的test
-    # 因为decentralized method的目标还是训练一个全局模型后续的测试还是需要全局模型
-    # 不再进行梯度或者是模型参数的aggregation
     def __init__(self, ct, args):
         super().__init__(ct)
         self.super_params = args.__dict__.copy()
@@ -38,14 +34,13 @@ class ServerManager(BaseServer):
         self.eval_step_interval = args.eval_step_interval
         self.eval_on_full_test_data = args.eval_on_full_test_data
 
-        self.full_train_dataloader = args.data_distributer.get_train_dataloader()  ##训练数据 计算train_loss
-        self.full_test_dataloader = args.data_distributer.get_test_dataloader()    ##测试数据 计算test_loss
+        self.full_train_dataloader = args.data_distributer.get_train_dataloader()  ##
+        self.full_test_dataloader = args.data_distributer.get_test_dataloader()    ##
         self.CE = nn.CrossEntropyLoss()
 
         set_seed(args.seed + 657)
 
-        ##将初始化的模型分发给local模型
-        self.model, self.global_classifier = model_pull(args, g_classifer=True)  # 用于全局模型性能的评估
+        self.model, self.global_classifier = model_pull(args, g_classifer=True)  # 
 
         self.global_params = get_cpu_param(self.model.state_dict())
         self.global_classifier_params = get_cpu_param(self.global_classifier.state_dict())
@@ -61,8 +56,8 @@ class ServerManager(BaseServer):
 
         self.comm_load = {client_id: 0 for client_id in range(args.client_num)}
 
-        self.client_eval_info = []  ##不需要, 因此在运行过程中都为空
-        self.global_train_eval_info = []  ##需要
+        self.client_eval_info = []  ##
+        self.global_train_eval_info = []  ##
 
         self.unfinished_client_num = -1
 
@@ -95,13 +90,13 @@ class ServerManager(BaseServer):
 
     def next_step(self):
         self.step += 1
-        self.selected_clients = self._new_train_workload_arrage()  ##随机
+        self.selected_clients = self._new_train_workload_arrage()  ##
         self.unfinished_client_num = self.selected_client_num
         self.global_params_aggregator.clear()
 
         for client_id in self.selected_clients:
             self._ct_.get_node('client', client_id) \
-                .fed_client_train_step(step=self.step, global_params=None, global_classifier_params = self.global_classifier_params) ##当step==0时
+                .fed_client_train_step(step=self.step, global_params=None, global_classifier_params = self.global_classifier_params) ##
 
     def _new_train_workload_arrage(self):
         if self.selected_client_num < self.client_num:
@@ -129,12 +124,11 @@ class ServerManager(BaseServer):
         self.global_classifier_params_aggregator.put(client_classifier_params, weight)
 
         if self.comm_load[client_id] == 0:
-            self.comm_load[client_id] = model_size(client_classifier_params) / 1024 / 1024  ##单位为MB
+            self.comm_load[client_id] = model_size(client_classifier_params) / 1024 / 1024  ##
 
         self.unfinished_client_num -= 1
         if not self.unfinished_client_num:
             self.server_train_test_res = {'comm. round': self.step, 'client_id': 'server'}
-            ##获得全局模型，用于查看性能
             self.global_params = self.global_params_aggregator.get_and_clear()
             client_test_acc_avg = self.client_test_acc_aggregator.get_and_clear()
             print('comm. round: {}, client_test_acc: {}'.format(self.step, client_test_acc_avg))
@@ -237,16 +231,15 @@ class ClientManager(BaseServer):
         self.trainer.res = {'communication round': step, 'client_id': self.client_id}
 
         if self.step > 0:
-            self.classifier_to_model(global_classifier_params)  ##将global classifier的参数替换model中对应的层
+            self.classifier_to_model(global_classifier_params)  ##
 
         self.timestamp = time.time()
-        # 算法第9行:获取梯度
         self.trainer.train_locally_step(self.I, step)
         curr_timestamp = time.time()
         train_time = curr_timestamp - self.timestamp
 
         self.model_to_classifier()
-        self.finish_train_step(self.trainer.model, self.trainer.classifier, train_time) ##把本地模式上传用于测试全模型，还要上传local classifier
+        self.finish_train_step(self.trainer.model, self.trainer.classifier, train_time) ##
         self.trainer.clear()
         torch.cuda.empty_cache()
 
