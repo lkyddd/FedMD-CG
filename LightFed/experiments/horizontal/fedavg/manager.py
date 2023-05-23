@@ -17,10 +17,6 @@ from collections import OrderedDict
 import time
 
 class ServerManager(BaseServer):
-    # 现在的server_role的作用是控制实验的初始化和进程
-    # 以及进行测试global模型的test
-    # 因为decentralized method的目标还是训练一个全局模型后续的测试还是需要全局模型
-    # 不再进行梯度或者是模型参数的aggregation
     def __init__(self, ct, args):
         super().__init__(ct)
         self.super_params = args.__dict__.copy()
@@ -35,13 +31,13 @@ class ServerManager(BaseServer):
         self.eval_step_interval = args.eval_step_interval
         self.eval_on_full_test_data = args.eval_on_full_test_data
 
-        self.full_train_dataloader = args.data_distributer.get_train_dataloader()  ##训练数据 计算train_loss
-        self.full_test_dataloader = args.data_distributer.get_test_dataloader()    ##测试数据 计算test_loss
+        self.full_train_dataloader = args.data_distributer.get_train_dataloader()  ##
+        self.full_test_dataloader = args.data_distributer.get_test_dataloader()    ##
         self.criterion = nn.CrossEntropyLoss().to(self.device)
 
         set_seed(args.seed + 657)
 
-        self.model, _ = model_pull(args)  # 用于全局模型性能的评估
+        self.model, _ = model_pull(args)  #
         path = os.path.abspath(os.path.join(os.getcwd(), ".."))
         if not os.path.exists(f"{path}/model_save/{args.model_type}_{args.data_set}.pth"):
             torch.save(self.model, f"{path}/model_save/{args.model_type}_{args.data_set}.pth")
@@ -58,8 +54,8 @@ class ServerManager(BaseServer):
 
         self.comm_load = {client_id: 0 for client_id in range(args.client_num)}
 
-        self.client_eval_info = []  ##不需要, 因此在运行过程中都为空
-        self.global_train_eval_info = []  ##需要
+        self.client_eval_info = []  ##
+        self.global_train_eval_info = []  ##
 
         self.unfinished_client_num = -1
 
@@ -90,7 +86,7 @@ class ServerManager(BaseServer):
 
     def next_step(self):
         self.step += 1
-        self.selected_clients = self._new_train_workload_arrage()  ##随机
+        self.selected_clients = self._new_train_workload_arrage()  ##
         self.unfinished_client_num = self.selected_client_num
         self.global_params_aggregator.clear()
 
@@ -120,7 +116,7 @@ class ServerManager(BaseServer):
         self.global_params_aggregator.put(client_model_params, weight)
 
         if self.comm_load[client_id] == 0:
-            self.comm_load[client_id] = model_size(client_model_params) / 1024 / 1024  ##单位为MB
+            self.comm_load[client_id] = model_size(client_model_params) / 1024 / 1024  ##
 
         self.unfinished_client_num -= 1
         if not self.unfinished_client_num:
@@ -192,7 +188,6 @@ class ClientManager(BaseServer):
         # self.trainer.model = torch.load(f"{path}/model_save/{self.model_type}_{self.data_set}.pth")
         self.trainer.model.load_state_dict(global_params, strict=True)
 
-        # 算法第9行:获取梯度
         self.timestamp = time.time()
         self.trainer.train_locally_step(self.I, step)
         curr_timestamp = time.time()
