@@ -36,7 +36,7 @@ class ModelStateAvgAgg(BaseAgg):
         self.accum_model_state = None
         self.accum_weight = 0.0
 
-    def put(self, state, weight=1.0):  # 这里的weight表示sample_number
+    def put(self, state, weight=1.0):  #
         if self.accum_model_state is None:
             self.accum_model_state = copy.deepcopy(state)
             if weight != 1.0:
@@ -77,7 +77,7 @@ class ModelGradAvgAgg(BaseAgg):
         self.accum_model_grad = None
         self.accum_weight = 0.0
 
-    def put(self, state, weight=1.0):  # 这里的weight表示sample_number
+    def put(self, state, weight=1.0):  # 
         if self.accum_model_grad is None:
             self.accum_model_grad = copy.deepcopy(state)
             if weight != 1.0:
