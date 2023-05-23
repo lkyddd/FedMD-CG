@@ -34,15 +34,13 @@ class ClientTrainer:
         torch.cuda.empty_cache()
 
     def train_locally_step(self, I):
-        """算法的第5行
-        """
         self.model.train()
         LOSS = 0
         for tau in range(I):
             self.model.zero_grad(set_to_none=True)
             self.optimizer.zero_grad()
 
-            ##batch数据
+            ##batch
             x, y = next(self.train_batch_data_iter)
             x = x.to(self.device)
             y = y.to(self.device)
