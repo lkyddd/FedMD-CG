@@ -102,7 +102,6 @@ class CycleDataloader:
         return self
 
 
-###这个可以直接引用过来
 class DiversityLoss(nn.Module):
     """
     Diversity loss for improving the performance.
