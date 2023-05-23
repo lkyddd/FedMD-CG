@@ -14,8 +14,4 @@ if __name__ == "__main__":
         .get_runner() \
         .run()
 
-"""
-cd /root/luoky/LightFed/experiments/horizontal/fedavg
-export PYTHONPATH=/root/luoky/LightFed
-mpiexec -n 6 python main_scaffold.py
-"""
+
