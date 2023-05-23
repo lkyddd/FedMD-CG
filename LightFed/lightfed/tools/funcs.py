@@ -39,15 +39,6 @@ def consistent_hash(*objs, code_len=6):
 
 
 def formula(func, *params_args):
-    """在模型参数上计算公式
-
-    Args:
-        func: 公式函数，参数顺序要和params_args中的保持一致
-        params_args: 输入公式的模型参数字典，OrderedDict或Dict类型
-
-    Returns:
-        OrderedDict类型的公式计算结果
-    """
     res = OrderedDict()
     for name in params_args[0].keys():
         weight = func(*[params[name] for params in params_args])
@@ -56,8 +47,6 @@ def formula(func, *params_args):
 
 
 def model_size(model):
-    """获取模型大小，可以传入模型或模型的state_dict
-    """
     if isinstance(model, torch.nn.Module):
         params_iter = model.named_parameters()
     elif isinstance(model, dict):
