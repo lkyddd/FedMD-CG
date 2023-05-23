@@ -1,7 +1,7 @@
 import logging
-# from mpi4py import MPI
+from mpi4py import MPI
 import setproctitle
-# from lightfed.core.mode.cluster import ClusterContext, ClusterRunner
+from lightfed.core.mode.cluster import ClusterContext, ClusterRunner
 from lightfed.core.mode.local import LocalContext, LocalRunner
 
 CLUSTER_MODE = 1
