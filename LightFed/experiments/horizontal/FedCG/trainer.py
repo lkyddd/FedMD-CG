@@ -71,7 +71,7 @@ class ClientTrainer:
         self.MSE = nn.MSELoss()
         self.KL = nn.KLDivLoss(reduction="batchmean") #
         self.CE = nn.CrossEntropyLoss()
-        self.diversity_loss = DiversityLoss(metric='l2').to(self.device)  ##这里可以进行修改
+        self.diversity_loss = DiversityLoss(metric='l2').to(self.device)  
 
     def random_choice_y(self, batch_size, label_num):
         if len(label_num) > 0:
@@ -101,7 +101,7 @@ class ClientTrainer:
         with torch.no_grad():
             for name, weight in self.model.named_parameters():
                 _g = weight.grad.detach()
-                if 'bias' not in name:  # 不对偏置项进行正则化
+                if 'bias' not in name:  
                     _g += (weight * self.weight_decay).detach()
                 grad[name] = _g
         return grad
@@ -144,15 +144,14 @@ class ClientTrainer:
         torch.cuda.empty_cache()
 
     def train_locally_step(self, I, step, label_num, latent_layer_idx):
-        """算法的第5行
-        """
+
         self.step = step
         self.label_num = label_num
         self.latent_layer_idx = latent_layer_idx
         # self.clean_up_counts()
 
 
-        ##这个可以后续在调整
+
         # generative_alpha = self.exp_lr_scheduler(self.step, decay=0.98, init_lr=self.generative_alpha)
         # generative_beta = self.exp_lr_scheduler(self.step, decay=0.98, init_lr=self.generative_beta)
 
@@ -160,7 +159,6 @@ class ClientTrainer:
 
         ###sample y and generate z
         for tau in range(I):
-            ##阶段1：利用生成器去增强本地训练
             self.update_local_model()
             for _, y in self.cache_dataset:
                 eps = torch.rand((y.shape[0], self.generator_model.noise_dim))
@@ -170,7 +168,6 @@ class ClientTrainer:
 
     def update_local_model(self, ):
         self.model.train()
-        ##冻结模型，即在更新的时候不要计算其梯度，节省训练时间
         grad_False(self.generator_model)
 
         L_CE, L_MSE_F, LOSS = 0, 0, 0
@@ -178,7 +175,6 @@ class ClientTrainer:
             self.model.zero_grad(set_to_none=True)
             self.lm_optimizer.zero_grad(set_to_none=True)
 
-            ##batch数据
             x, y = next(self.train_batch_data_iter)
             x = x.to(self.device)
             y = y.to(self.device)
@@ -187,7 +183,6 @@ class ClientTrainer:
             model_result = self.model(x, logit=True, latent_feature=True)
             L_ce = self.CE(model_result['logit'], y)
 
-            ###sample y and generate z
             if self.step:
                 latent_feature = model_result['latent_features'][0]
 
@@ -229,12 +224,10 @@ class ClientTrainer:
 
     def update_generator_discriminator(self, ):
         self.model.eval()
-        ##冻结模型，即在更新的时候不要计算其梯度，节省训练时间
         grad_False(self.model)
 
         L_CE_G, L_DISC, L_GEN = 0, 0, 0
         for _ in range(self.I_gen_dis):
-            ##batch数据
             for data, noise in zip(self.cache_dataset, self.cache_noise_dataset):
                 x, y = data[0], data[1]
                 loss_disc = self.update_discriminator(x, y, noise)
