@@ -2,11 +2,6 @@ from lightfed.core.mode import BaseNode
 from mpi4py import MPI
 
 
-# 锚定req对象，否则python会立刻回收req对象，导致传输失败
-# 还有一种异步发送方法：
-#   MPI.Attach_buffer(np.empty(BUFFER_SIZE, dtype=np.int))
-#   comm.ibsend(obj, dest)
-# 但是这样需要设置BUFFER_SIZE，大了浪费，小了不够
 class _RequestManager:
     def __init__(self):
         self.req_list = []
