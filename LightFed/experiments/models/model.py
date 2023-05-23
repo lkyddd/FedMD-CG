@@ -39,7 +39,7 @@ import math
 # }
 
 CONFIGS_ = {
-    # convolution layer (feature extraction) configuration, classifier configuration, input_channel, n_class, latent_dim(表示特征提取fllaten后的维度)
+    # convolution layer (feature extraction) configuration, classifier configuration, input_channel, n_class, latent_dim
     'MNIST': ([6, 'M', 16, 'M', 'F'], [32], 1, 10, 64),
     'FMNIST': ([16, 'M', 32, 'M', 'F'], [64], 1, 10, 128),
     'EMNIST': ([16, 'M', 32, 'M', 'F'], [128], 1, 10, 128),
@@ -50,7 +50,7 @@ CONFIGS_ = {
 }
 
 CLASSIFERCONFIGS = {
-    # convolution layer (feature extraction) configuration, classifier configuration, input_channel, n_class, latent_dim(表示特征提取fllaten后的维度)
+    # convolution layer (feature extraction) configuration, classifier configuration, input_channel, n_class, latent_dim
     'MNIST': ([], [32], 1, 10, 64),
     'FMNIST': ([], [64], 1, 10, 128),
     'EMNIST': ([], [128], 1, 10, 128),
@@ -62,7 +62,7 @@ CLASSIFERCONFIGS = {
 }
 
 DISCRIMINATORCONFIGS = {
-    # convolution layer (feature extraction) configuration, classifier configuration, input_channel, n_class, latent_dim(表示特征提取fllaten后的维度)
+    # convolution layer (feature extraction) configuration, classifier configuration, input_channel, n_class, latent_dim
     'MNIST': ([], [32], 1, 1, 64),
     'FMNIST': ([], [64], 1, 1, 128),
     'EMNIST': ([], [128], 1, 1, 128),
@@ -108,7 +108,7 @@ def model_pull(args, g_classifer=False, l_classifer=False, discriminator=False):
         else:
             return Lenet(args).to(args.device), []
 
-    elif args.model_type == 'ResNet_18':  # 适用于：MNIST, CIFAR-10, CIFAR-100
+    elif args.model_type == 'ResNet_18':  # MNIST, CIFAR-10, CIFAR-100
         if g_classifer == True:
             return ResNet(BasicBlock, [2, 2, 2, 2], args).to(args.device), Lenet(args, classifier_or_not=g_classifer).to(args.device)
 
@@ -121,7 +121,7 @@ def model_pull(args, g_classifer=False, l_classifer=False, discriminator=False):
         else:
             return ResNet(BasicBlock, [2, 2, 2, 2], args).to(args.device), []
 
-    elif args.model_type == 'ResNet_20':  # 适用于：MNIST, CIFAR-10, CIFAR-100
+    elif args.model_type == 'ResNet_20':  # MNIST, CIFAR-10, CIFAR-100
         if g_classifer == True:
             return ResNet(BasicBlock, [2, 3, 2, 2], args).to(args.device), Lenet(args, classifier_or_not=g_classifer).to(args.device)
 
@@ -143,19 +143,17 @@ def model_pull(args, g_classifer=False, l_classifer=False, discriminator=False):
 
 def generator_model_pull(args):
 
-    # ------------ 凸模型 -----------
-    if args.generator_model_type == 'generator':  # 适用于：MNIST, CIFAR-10, CIFAR-100, COVERTYPE, A9A, W8A
+    if args.generator_model_type == 'generator':  # MNIST, CIFAR-10, CIFAR-100, COVERTYPE, A9A, W8A
         return Generate(args)
 
 def generator_model_pull_DLG(args):
-    # ------------ 凸模型 -----------
-    if args.generator_model_type == 'generator':  # 适用于：MNIST, CIFAR-10, CIFAR-100, COVERTYPE, A9A, W8A
+    if args.generator_model_type == 'generator':  # MNIST, CIFAR-10, CIFAR-100, COVERTYPE, A9A, W8A
         return Generate_DLG(args)
 
 
 ####DLG
 def model_pull_DLG(args):
-    if args.model_type == 'Lenet':  # 适用于：CIFAR-10
+    if args.model_type == 'Lenet':  # CIFAR-10
         return LeNet(args.data_set)
 
 class LeNet(nn.Module):
@@ -205,8 +203,6 @@ class LeNet(nn.Module):
             return out
 
 
-#####################FedGen方法的模型##############
-##MNIST+Lenet_5  这里是简单的卷积层加线性层(暂定处理MNIST, CIFAR10, CIFAR100) 利用源代码给出的格式
 class Lenet(nn.Module):
     def __init__(self, args, classifier_or_not=False, discriminator=False):
         super(Lenet, self).__init__()
@@ -379,7 +375,6 @@ class Lenet(nn.Module):
 
 
 
-'''非凸模型：VGG-11 cifor-100 确定'''
 class VGGNet(nn.Module):
     def __init__(self):
         super(VGGNet, self).__init__()
@@ -423,7 +418,6 @@ class VGGNet(nn.Module):
 
 
 
-'''非凸模型：ResNet-18/34'''
 ##########################################
 class BasicBlock(nn.Module):
     """Basic Block for resnet 18 and resnet 34
@@ -558,7 +552,6 @@ class ResNet(nn.Module):
 #     return ResNet(BasicBlock, [3, 4, 6, 3])
 
 
-###########生成器########## 生成器的格式给定，可根据预先定义的网络参数给定
 class Generate(nn.Module):
     def __init__(self, args):
         super(Generate, self).__init__()
@@ -580,7 +573,7 @@ class Generate(nn.Module):
 
     # def init_loss_fn(self):
     #     self.crossentropy_loss=nn.NLLLoss(reduce=False).to(self.device) # same as above
-    #     self.diversity_loss = DiversityLoss(metric='l2').to(self.device) ##这里可以进行修改
+    #     self.diversity_loss = DiversityLoss(metric='l2').to(self.device) #
     #     self.dist_loss = nn.MSELoss().to(self.device)
 
     def build_network(self):
@@ -667,7 +660,7 @@ class Generate_DLG(nn.Module):
 
     # def init_loss_fn(self):
     #     self.crossentropy_loss=nn.NLLLoss(reduce=False).to(self.device) # same as above
-    #     self.diversity_loss = DiversityLoss(metric='l2').to(self.device) ##这里可以进行修改
+    #     self.diversity_loss = DiversityLoss(metric='l2').to(self.device)
     #     self.dist_loss = nn.MSELoss().to(self.device)
 
     def build_network(self):
