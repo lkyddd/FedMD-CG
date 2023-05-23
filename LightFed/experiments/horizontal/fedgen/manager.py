@@ -20,10 +20,6 @@ from param_config import METRICS
 MIN_SAMPLES_PER_LABEL=1
 
 class ServerManager(BaseServer):
-    # 现在的server_role的作用是控制实验的初始化和进程
-    # 以及进行测试global模型的test
-    # 因为decentralized method的目标还是训练一个全局模型后续的测试还是需要全局模型
-    # 不再进行梯度或者是模型参数的aggregation
     def __init__(self, ct, args):
         super().__init__(ct)
         self.super_params = args.__dict__.copy()
@@ -35,13 +31,12 @@ class ServerManager(BaseServer):
         self.selected_client_num = args.selected_client_num
         self.comm_round = args.comm_round
         self.I = args.I
-        self.diversity_loss_type = args.diversity_loss_type  ###是否在diversity loss中考虑类别信息
+        self.diversity_loss_type = args.diversity_loss_type  ###
 
 
         self.eval_step_interval = args.eval_step_interval
         self.eval_on_full_test_data = args.eval_on_full_test_data
 
-        ###训练生成器的相关参数
         self.I_gen = args.I_gen
         self.gen_batch_size = args.gen_batch_size
         self.lr_gen = args.lr_gen
@@ -51,13 +46,13 @@ class ServerManager(BaseServer):
         self.temp_s = args.temp_s
         self.weight_decay = args.weight_decay
 
-        self.full_train_dataloader = args.data_distributer.get_train_dataloader()  ##训练数据 计算train_loss
-        self.full_test_dataloader = args.data_distributer.get_test_dataloader()    ##测试数据 计算test_loss
+        self.full_train_dataloader = args.data_distributer.get_train_dataloader()  ##
+        self.full_test_dataloader = args.data_distributer.get_test_dataloader()    ##
         self.init_loss_fn()
 
         set_seed(args.seed + 657)
 
-        self.model, self.global_classifier = model_pull(args, g_classifer=True)  # 用于全局模型性能的评估
+        self.model, self.global_classifier = model_pull(args, g_classifer=True)  # 
         self.generator_model = generator_model_pull(args).to(self.device)
         path = os.path.abspath(os.path.join(os.getcwd(), ".."))
         # if not os.path.exists(f"{path}/model_save/{args.model_type}.pth"):
@@ -87,8 +82,8 @@ class ServerManager(BaseServer):
 
         self.client_test_acc_aggregator = NumericAvgAgg()
 
-        self.client_eval_info = []  ##不需要, 因此在运行过程中都为空
-        self.global_train_eval_info = []  ##需要
+        self.client_eval_info = []  ##
+        self.global_train_eval_info = []  ##
 
         self.unfinished_client_num = -1
 
@@ -104,7 +99,7 @@ class ServerManager(BaseServer):
         self.NLL = nn.NLLLoss(reduce=False).to(self.device)
         self.KL = nn.KLDivLoss().to(self.device)  # ,log_target=True)
         self.CE = nn.CrossEntropyLoss().to(self.device)
-        self.diversity_loss = DiversityLoss(metric='l2').to(self.device)  ##这里可以进行修改
+        self.diversity_loss = DiversityLoss(metric='l2').to(self.device)  ##
         self.dist_loss = nn.MSELoss().to(self.device)
 
     def init_optimizer(self):
@@ -134,7 +129,7 @@ class ServerManager(BaseServer):
 
     def next_step(self):
         self.step += 1
-        self.selected_clients = self._new_train_workload_arrage()  ##随机
+        self.selected_clients = self._new_train_workload_arrage()  ##
         self.unfinished_client_num = self.selected_client_num
         self.global_params_aggregator.clear()
 
@@ -232,7 +227,7 @@ class ServerManager(BaseServer):
         self.global_classifier_params_aggregator.put(local_classifier_params, weight)
 
         if self.comm_load[client_id] == 0:
-            self.comm_load[client_id] = model_size(local_classifier_params) / 1024 / 1024  ##单位为MB
+            self.comm_load[client_id] = model_size(local_classifier_params) / 1024 / 1024  ##
 
         self.update_label_counts_collect(client_id, label_count)
         self.update_client_classifier_collect(client_id, local_classifier)
@@ -240,7 +235,7 @@ class ServerManager(BaseServer):
         self.unfinished_client_num -= 1
         if not self.unfinished_client_num:
             self.server_train_test_res = {'comm. round': self.step, 'client_id': 'server'}
-            ##获得全局模型，用于查看性能
+
             self.global_params = self.global_params_aggregator.get_and_clear()
             client_test_acc_avg = self.client_test_acc_aggregator.get_and_clear()
             print('comm. round: {}, client_test_acc: {}'.format(self.step, client_test_acc_avg))
@@ -421,13 +416,12 @@ class ClientManager(BaseServer):
         self.trainer.res = {'communication round': step, 'client_id': self.client_id}
 
         if self.step > 0:
-            self.classifier_to_model(global_classifier_params)  ##将global classifier的参数替换model中对应的层
+            self.classifier_to_model(global_classifier_params)  ##
 
         self.trainer.generator_model = torch.load(f"{path}/model_save/{self.generator_model_type}_{self.data_set}.pth")
         self.trainer.generator_model.load_state_dict(generator_params, strict=True)
 
         self.timestamp = time.time()
-        # 算法第9行:获取梯度
         self.trainer.train_locally_step(self.I, self.step, label_num, latent_layer_idx)
         curr_timestamp = time.time()
         train_time = curr_timestamp - self.timestamp
