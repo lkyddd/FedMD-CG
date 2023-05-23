@@ -24,7 +24,7 @@ class ClientTrainer:
         self.res = {}
 
         set_seed(args.seed + 657)
-        # self.model = None  # 用于全局模型性能的评估
+        # self.model = None  #
         self.model, _ = model_pull(args)
 
         self.criterion = nn.CrossEntropyLoss().to(self.device)
@@ -38,15 +38,13 @@ class ClientTrainer:
         torch.cuda.empty_cache()
 
     def train_locally_step(self, I, step):
-        """算法的第5行
-        """
         self.model.train()
         LOSS = 0
         for tau in range(I):
             self.model.zero_grad(set_to_none=True)
             self.optimizer.zero_grad(set_to_none=True)
 
-            ##batch数据
+            ##batch
             x, y = next(self.train_batch_data_iter)
             x = x.to(self.device)
             y = y.to(self.device)
