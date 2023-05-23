@@ -55,7 +55,7 @@ class DataDistributer:
         self.data_set = args.data_set
 
         self.class_num = None
-        self.x_shape = None  # 每个样本x的shape
+        self.x_shape = None
         self.client_train_dataloaders = []
         self.client_noise_dataset = []
         self.full_noise_dataset = None
@@ -602,7 +602,6 @@ class DataDistributer:
                 client_data.append(train_dataset[id])
         client_datasets = []
         for client_data in client_data_list:
-            # 打乱数据集
             np.random.shuffle(client_data)
             _dataset = ListDataset(client_data)
             client_datasets.append(_dataset)
@@ -651,7 +650,6 @@ class DataDistributer:
                 client_data.append(train_dataset[id])
         client_datasets = []
         for client_data in client_data_list:
-            # 打乱数据集
             np.random.shuffle(client_data)
             _dataset = ListDataset(client_data)
             client_datasets.append(_dataset)
