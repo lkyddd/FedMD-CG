@@ -20,10 +20,6 @@ from param_config import METRICS
 MIN_SAMPLES_PER_LABEL=1
 
 class ServerManager(BaseServer):
-    # 现在的server_role的作用是控制实验的初始化和进程
-    # 以及进行测试global模型的test
-    # 因为decentralized method的目标还是训练一个全局模型后续的测试还是需要全局模型
-    # 不再进行梯度或者是模型参数的aggregation
     def __init__(self, ct, args):
         super().__init__(ct)
         self.super_params = args.__dict__.copy()
@@ -47,14 +43,13 @@ class ServerManager(BaseServer):
         self.distill_aggregation_type = args.distill_aggregation_type
         self.temp_s = args.temp_s
 
-        self.full_train_dataloader = args.data_distributer.get_train_dataloader()  ##训练数据 计算train_loss
-        self.full_test_dataloader = args.data_distributer.get_test_dataloader()    ##测试数据 计算test_loss
+        self.full_train_dataloader = args.data_distributer.get_train_dataloader()  
+        self.full_test_dataloader = args.data_distributer.get_test_dataloader()   
         self.init_loss_fn()
 
         set_seed(args.seed + 657)
 
-        ##将初始化的模型分发给local模型
-        self.model, self.global_classifier = model_pull(args, g_classifer=True)  # 用于全局模型性能的评估
+        self.model, self.global_classifier = model_pull(args, g_classifer=True)  
         self.global_generator_model = generator_model_pull(args).to(self.device)
         path = os.path.abspath(os.path.join(os.getcwd(), ".."))
         # if not os.path.exists(f"{path}/model_save/{args.model_type}_{args.data_set}.pth"):
@@ -72,7 +67,7 @@ class ServerManager(BaseServer):
         self.global_generator_params = get_cpu_param(self.global_generator_model.state_dict())
 
         self.latent_layer_idx = None
-        self.init_optimizer() ##这个是否应该放在这里
+        self.init_optimizer() 
         torch.cuda.empty_cache()
         self.local_sample_numbers = [len(args.data_distributer.get_client_train_dataloader(client_id).dataset)
                                      for client_id in range(args.client_num)]
@@ -91,8 +86,8 @@ class ServerManager(BaseServer):
 
         self.client_test_acc_aggregator = NumericAvgAgg()
 
-        self.client_eval_info = []  ##不需要, 因此在运行过程中都为空
-        self.global_train_eval_info = []  ##需要
+        self.client_eval_info = []  
+        self.global_train_eval_info = []  
 
         self.unfinished_client_num = -1
 
@@ -106,7 +101,7 @@ class ServerManager(BaseServer):
 
     def init_loss_fn(self):
         self.NLL = nn.NLLLoss(reduce=False).to(self.device)
-        self.KL = nn.KLDivLoss(reduce=False).to(self.device)  # ,log_target=True)
+        self.KL = nn.KLDivLoss(reduce=False).to(self.device)  
         self.MSE = nn.MSELoss(reduce=False).to(self.device)
         self.KL_ = nn.KLDivLoss().to(self.device)
         self.CE = nn.CrossEntropyLoss().to(self.device)
@@ -152,7 +147,7 @@ class ServerManager(BaseServer):
 
     def next_step(self):
         self.step += 1
-        self.selected_clients = self._new_train_workload_arrage()  ##随机
+        self.selected_clients = self._new_train_workload_arrage()  
         self.unfinished_client_num = self.selected_client_num
         self.global_params_aggregator.clear()
 
@@ -384,7 +379,7 @@ class ServerManager(BaseServer):
         self.global_generator_params_aggregator.put(generator_model_params, weight)
 
         if self.comm_load[client_id] == 0:
-            self.comm_load[client_id] = (model_size(client_classifier_params) + model_size(generator_model_params)) / 1024 / 1024  ##单位为MB
+            self.comm_load[client_id] = (model_size(client_classifier_params) + model_size(generator_model_params)) / 1024 / 1024 
 
         self.update_label_counts_collect(client_id, label_count)
         if self.distill_aggregation:
@@ -394,7 +389,7 @@ class ServerManager(BaseServer):
         self.unfinished_client_num -= 1
         if not self.unfinished_client_num:
             self.server_train_test_res = {'comm. round': self.step, 'client_id': 'server'}
-            ##获得全局模型，用于查看性能
+
             self.global_params = self.global_params_aggregator.get_and_clear()
             client_test_acc_avg = self.client_test_acc_aggregator.get_and_clear()
             print('comm. round: {}, client_test_acc: {}'.format(self.step, client_test_acc_avg))
@@ -516,7 +511,7 @@ class ClientManager(BaseServer):
         self.trainer.res = {'communication round': step, 'client_id': self.client_id}
 
         if self.step > 0:
-            self.classifier_to_model(global_classifier_params)  ##将global classifier的参数替换model中对应的层
+            self.classifier_to_model(global_classifier_params)  
 
         # self.trainer.generator_model = torch.load(f"{path}/model_save/{self.generator_model_type}_{self.data_set}.pth")
         self.trainer.generator_model.load_state_dict(generator_params, strict=True)
@@ -528,7 +523,7 @@ class ClientManager(BaseServer):
         train_time = curr_timestamp - self.timestamp
 
         self.model_to_classifier()
-        self.finish_train_step(self.trainer.model, self.trainer.generator_model, self.trainer.classifier, self.trainer.label_counts, train_time) ##把本地模式上传用于测试全模型，还要上传local classifier
+        self.finish_train_step(self.trainer.model, self.trainer.generator_model, self.trainer.classifier, self.trainer.label_counts, train_time) #
         self.trainer.clean_up_counts()
         self.trainer.clear()
         torch.cuda.empty_cache()
