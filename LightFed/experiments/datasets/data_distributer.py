@@ -71,38 +71,9 @@ class DataDistributer:
         self.raw_test_data_dataloaders = None
 
 
-
-        # _cache_file_name = f"{self.cache_dir}/{self.args.data_set}_seed_{self.args.seed}_client_num_{self.client_num}_{self.args.data_partition_mode}"
-        # if self.args.data_partition_mode == 'non_iid_dirichlet':
-        #     _cache_file_name += f"_{self.args.non_iid_alpha}"
-        # _cache_file_name += f"{self.args.device.type}.pkl"
-
-        # if os.path.exists(_cache_file_name):
-        #     self.class_num, self.x_shape, \
-        #         self.client_train_dataloaders, self.client_test_dataloaders, \
-        #         self.train_dataloaders, self.test_dataloaders = load_pkl(_cache_file_name)
-        #     return
-
-        # 由数据集名字拼接出加载数据集的函数名
-        # 数据集名字中的减号会被替换为下划线，因为函数名不能有下划线
         _dataset_load_func = getattr(self, f'_load_{args.data_set.replace("-","_")}')
-        _dataset_load_func()  # 调用数据集加载函数
-
-        # if 'MNIST' in args.data_set:
-        #     self._load_MNIST()
-        # elif 'FMNIST' in args.data_set:
-        #     self._load_FMNIST()
-        # elif 'CIFAR-10' in args.data_set:
-        #     self._load_CIFAR_10()
-        # elif 'CIFAR-100' in args.data_set:
-        #     self._load_CIFAR_100()
-
-
-        # save_pkl((self.class_num, self.x_shape,
-        #           self.client_train_dataloaders, self.client_test_dataloaders,
-        #           self.train_dataloaders, self.test_dataloaders),
-        #          _cache_file_name)
-
+        _dataset_load_func() 
+        
     def get_client_train_dataloader(self, client_id):
         return self.client_train_dataloaders[client_id]
 
@@ -166,7 +137,6 @@ class DataDistributer:
             return
 
         client_train_datasets, client_test_datasets = self._split_dataset(train_dataset, test_dataset)
-        # client_train_datasets = self._split_dataset(train_dataset, test_dataset)
         for client_id in range(self.client_num):
             _train_dataset = client_train_datasets[client_id]
             _test_dataset = client_test_datasets[client_id]
@@ -217,7 +187,6 @@ class DataDistributer:
         transform = transforms.Compose([transforms.ToTensor(),
                                         transforms.Normalize((0.1307,), (0.3081,))])
 
-        # transform = transforms.Compose([transforms.ToTensor()])
 
         raw_train_dataset = vision_datasets.FashionMNIST(root=f"{self.dataset_dir}/FMNIST", train=True, download=True)
         raw_test_dataset = vision_datasets.FashionMNIST(root=f"{self.dataset_dir}/FMNIST", train=False, download=True)
@@ -298,7 +267,6 @@ class DataDistributer:
         transform = transforms.Compose([transforms.ToTensor(),
                                         transforms.Normalize((0.1307,), (0.3081,))])
 
-        ###用于训练的原始图片
         transform_DLG = transforms.Compose([transforms.ToTensor()])
         raw_train_dataset_DLG = vision_datasets.EMNIST(root=f"{self.dataset_dir}/EMNIST", split="digits", train=True,
                                                download=False, transform=transform_DLG)
@@ -311,7 +279,6 @@ class DataDistributer:
                                                     drop_last=True, shuffle=False)
 
 
-        ##原始图片
         raw_train_dataset = vision_datasets.EMNIST(root=f"{self.dataset_dir}/EMNIST", split="digits", train=True,
                                                download=False)
         raw_test_dataset = vision_datasets.EMNIST(root=f"{self.dataset_dir}/EMNIST", split="digits", train=False,
@@ -395,13 +362,10 @@ class DataDistributer:
         self.class_num = 10
         self.x_shape = (3, 32, 32)
 
-        # 只开RandomCrop和RandomHorizontalFlip是标准的CIFA-10数据扩展
         train_transform = transforms.Compose([
-            # transforms.RandomRotation(degrees=10),  # 随机旋转
-            transforms.RandomCrop(size=32, padding=4),  # 填充后裁剪
-            transforms.RandomHorizontalFlip(p=0.5),  # 水平翻转
+            transforms.RandomCrop(size=32, padding=4), 
+            transforms.RandomHorizontalFlip(p=0.5),  
             transforms.ToTensor(),
-            # transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.1),  # 颜色变化。亮度
             transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010])])
         test_transform = transforms.Compose([
             transforms.ToTensor(),
@@ -577,7 +541,6 @@ class DataDistributer:
 
 
     def _split_dataset(self, train_dataset, test_dataset):
-        # partition_proportions中的第i行是第i个类别的数据被划分到各个客户端的比例
         if self.args.data_partition_mode == 'iid':
             partition_proportions = np.full(shape=(self.class_num, self.client_num), fill_value=1/self.client_num)
             client_train_datasets = self._split_dataset_iid(train_dataset, partition_proportions)
@@ -597,10 +560,6 @@ class DataDistributer:
 
     def _split_dataset_dirichlet_unbalanced(self, train_dataset, n_nets, alpha=0.01):
         y_train = train_dataset.targets
-        # y_train = torch.zeros(len(train_dataset), dtype=torch.long)
-        # print(y_train.dtype)
-        # for a in range(len(train_dataset)):
-        #     y_train[a] = (train_dataset[a][1])
 
         min_size = 0
         K = len(train_dataset.class_to_idx)
@@ -701,16 +660,12 @@ class DataDistributer:
 
     def _split_dataset_iid(self, dataset, partition_proportions):
         data_labels = dataset.targets
-        # 记录每个K个类别对应的样本下标
         class_idcs = [list(np.argwhere(np.array(data_labels) == y).flatten())
                       for y in range(self.class_num)]
 
-        #记录N个client分别对应样本集合的索引
         client_idcs = [[] for _ in range(self.client_num)]
 
         for c, fracs in zip(class_idcs, partition_proportions):
-            # np.split按照比例将类别为k的样本划分为了N个子集
-            # for i, idcs 为遍历第i个client对应样本集合的索引
             np.random.shuffle(c)
             for i, idcs in enumerate(np.split(c, (np.cumsum(fracs)[:-1] * len(c)).astype(int))):
                 client_idcs[i].extend(list(idcs))
@@ -719,256 +674,11 @@ class DataDistributer:
         for client_id, client_data in zip(client_idcs, client_data_list):
             for id in client_id:
                 client_data.append(dataset[id])
-        # label_partition = []
-        # for dtset in client_data_list:
-        #     label_partition.append([lb[1] for lb in dtset])
-        #
-        # save_pkl(label_partition, file_path=f"{os.path.dirname(__file__)}/label_partition/{self.args.data_set}_{self.args.non_iid_alpha}")
         client_datasets = []
         for client_data in client_data_list:
-            # 打乱数据集
             np.random.shuffle(client_data)
             _dataset = ListDataset(client_data)
             client_datasets.append(_dataset)
 
         return client_datasets
 
-
-if __name__ == "__main__":
-    import argparse
-
-    def get_args():
-        parser = argparse.ArgumentParser()
-
-        parser.add_argument('--batch_size', type=int, default=128)  # 128
-
-        parser.add_argument('--data_set', type=str, default='CIFAR-10')  # BBC-TEXT, AG-NEWS暂时无法使用
-
-        parser.add_argument('--data_partition_mode', type=str, default='non_iid_dirichlet',
-                            choices=['iid', 'non_iid_dirichlet'])
-
-        parser.add_argument('--non_iid_alpha', type=float, default=0.5)  # 在进行non_iid_dirichlet数据划分时需要, 该值越大表明数据月均匀
-
-        parser.add_argument('--client_num', type=int, default=10)
-
-        parser.add_argument('--device', type=torch.device, default='cuda')
-
-        parser.add_argument('--seed', type=int, default=0)
-
-        parser.add_argument('--app_name', type=str, default='DecentLaM')
-
-        args = parser.parse_args(args=[])
-
-        return args
-
-    args = get_args()
-    dd = DataDistributer(args)
-
-
-##################################################################
-
-# label_partition = []
-        # for dtset in client_data_list:
-        #     label_partition.append([lb[1] for lb in dtset])
-        #
-        # save_pkl(label_partition, file_path=f"{os.path.dirname(__file__)}/label_partition/{self.args.data_set}_{self.args.non_iid_alpha}")
-
-# 老代码
-##################################################################
-
-# from lightfed.tools.extract_dataset_CIFAR10 import Dataset_CIFAR10
-# from lightfed.tools.extract_dataset_CIFAR100 import Dataset_CIFAR100
-# from transformers import BertTokenizer
-# from sklearn.datasets import load_svmlight_file
-
-# ---------------- 加载：COVERTYPE数据集 ---------------  # 训练集：400,000；测试集：181,012；特征维数：54
-# class Deal_Dataset_COVERTYPE:
-#     def __init__(self, folder, is_train):
-#         data = np.genfromtxt(GzipFile(filename=folder+'/covtype.data.gz'), delimiter=',')
-#         np.random.shuffle(data)
-#         data_X = data[:, :-1]
-#         data_Y = data[:, -1].astype(np.int32)-1
-#         if is_train:
-#             self.train_set = data_X[:400000, ]
-#             self.train_labels = data_Y[:400000, ]
-#         else:
-#             self.train_set = data_X[400000:, ]
-#             self.train_labels = data_Y[400000:, ]
-
-#     def __getitem__(self, index):
-#         feature, target = self.train_set[index], int(self.train_labels[index])
-#         return feature, target
-
-#     def __len__(self):
-#         return len(self.train_set)
-# ----------------------------------------------------
-
-
-# -------------------- 加载：A9A数据集 ------------------   # 训练集：32,561；测试集：16,281；特征维数：122
-# class Deal_Dataset_A9A:
-#     def __init__(self, file_path, is_train):
-#         self.train_set, self.train_labels = load_svmlight_file(file_path)
-#         if is_train:
-#             self.train_set = self.train_set.todense().A[:, :-1]
-#         else:
-#             self.train_set = self.train_set.todense().A
-#         self.train_labels[self.train_labels == -1.0] = 0
-#         self.train_labels[self.train_labels == 1.0] = 1
-
-#     def __getitem__(self, index):
-#         feature, target = self.train_set[index], int(self.train_labels[index])
-#         return feature, target
-
-#     def __len__(self):
-#         return len(self.train_set)
-# ----------------------------------------------------
-
-
-# -------------------- 加载：W8A数据集 ------------------  # 训练集：49,749；测试集：14,951；特征维数：300
-# class Deal_Dataset_W8A(Dataset):
-#     def __init__(self, file_path):
-#         self.train_set, self.train_labels = load_svmlight_file(file_path)
-#         self.train_set = self.train_set.todense().A
-#         self.train_labels[self.train_labels == -1.0] = 0
-#         self.train_labels[self.train_labels == 1.0] = 1
-
-#     def __getitem__(self, index):
-#         feature, target = self.train_set[index], int(self.train_labels[index])
-#         return feature, target
-
-#     def __len__(self):
-#         return len(self.train_set)
-# ----------------------------------------------------
-
-
-# -------------------- 加载：FEMNIST数据集 ------------------  # 训练集：341,873；测试集：40,832；特征维数：784
-# class Deal_Dataset_FEMNIST:
-#     def __init__(self, data_file_path='', transform=None):
-#         self.train_set, self.train_labels, self.users_index = torch.load(data_file_path)
-#         self.transform = transform
-
-#     def __getitem__(self, index):
-#         img, target = self.train_set[index], int(self.train_labels[index])
-#         if self.transform is not None:
-#             img = self.transform(img)
-#         return img, target
-
-#     def __len__(self):
-#         return len(self.train_set)
-# ----------------------------------------------------
-
-
-# # -------------------- 加载：BBC-TEXT数据集 ------------------  # 训练集：1,780；测试集：445
-# class Deal_Dataset_BBCTEXT:
-#     def __init__(self, df, is_train):
-#         tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
-#         labels = {'business': 0,
-#                   'entertainment': 1,
-#                   'sport': 2,
-#                   'tech': 3,
-#                   'politics': 4
-#                   }
-#         df_train, df_test = np.split(df, (int(0.8*len(df)),))
-#         if is_train:
-#             text_data = [tokenizer(text, padding='max_length', max_length=512, truncation=True, return_tensors="pt") for text in df_train['text']]
-#             self.train_set = []
-#             for val in text_data:
-#                 self.train_set.append(torch.cat((val['input_ids'], val['attention_mask']), 0))
-#             self.train_labels = [labels[label] for label in df_train['category']]
-#         else:
-#             text_data = [tokenizer(text, padding='max_length', max_length=512, truncation=True, return_tensors="pt") for text in df_test['text']]
-#             self.train_set = []
-#             for val in text_data:
-#                 self.train_set.append(torch.cat((val['input_ids'], val['attention_mask']), 0))
-#             self.train_labels = [labels[label] for label in df_test['category']]
-#
-#     def __getitem__(self, index):
-#         feature, target = self.train_set[index], int(self.train_labels[index])
-#         return feature, target
-#
-#     def __len__(self):
-#         return len(self.train_set)
-# # ----------------------------------------------------
-#
-#
-# # -------------------- 加载：AG-NEWS数据集 ------------------  # 训练集：120,000；测试集：7,600
-# class Deal_Dataset_AGNEWS:
-#     def __init__(self, df):
-#         tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
-#         labels = {1: 0,
-#                   2: 1,
-#                   3: 2,
-#                   4: 3
-#                   }
-#         text_data = [tokenizer(text, padding='max_length', max_length=512, truncation=True, return_tensors="pt") for text in df['text']]
-#         self.train_set = []
-#         for val in text_data:
-#             self.train_set.append(torch.cat((val['input_ids'], val['attention_mask']), 0))
-#         self.train_labels = [labels[label] for label in df['category']]
-#
-#     def __getitem__(self, index):
-#         feature, target = self.train_set[index], int(self.train_labels[index])
-#         return feature, target
-#
-#     def __len__(self):
-#         return len(self.train_set)
-# # ----------------------------------------------------
-
-
-# elif args.data_set == 'CIFAR_100':
-#     # CIFAR-100中有两类标签：分100类的精准标签（超类），分20类的粗略标签（子类）
-#     # 设置'set_class_num_for_cifar_100'为100（默认值）或20来选择目标分类数
-#     set_class_num_for_cifar_100 = 100
-#     self.class_num = set_class_num_for_cifar_100
-#     self.feature_size = 3072
-#     self.channel_size = 3
-#     train_dataset = Deal_Dataset_CIFAR100(path + '/dataset/CIFAR-100/cifar100_data', is_train=True,
-#                                           classes=set_class_num_for_cifar_100,
-#                                           transform=transforms.Compose([transforms.ToTensor(),
-#                                                                         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]))
-#     test_dataset = Deal_Dataset_CIFAR100(path + '/dataset/CIFAR-100/cifar100_data', is_train=False,
-#                                          classes=set_class_num_for_cifar_100,
-#                                          transform=transforms.Compose([transforms.ToTensor(),
-#                                                                       transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]))
-#     self._init_train_dataloader_(train_dataset)
-#     self._init_test_dataloader_(test_dataset)
-
-# elif args.data_set == 'COVERTYPE':
-#     self.class_num = 7
-#     self.feature_size = 54
-#     self.channel_size = 0
-#     train_dataset = Deal_Dataset_COVERTYPE(path + '/dataset/COVERTYPE/covtype_data', is_train=True)
-#     test_dataset = Deal_Dataset_COVERTYPE(path + '/dataset/COVERTYPE/covtype_data', is_train=False)
-#     self._init_train_dataloader_(train_dataset)
-#     self._init_test_dataloader_(test_dataset)
-
-# elif args.data_set == 'A9A':
-#     self.class_num = 2
-#     self.feature_size = 122
-#     self.channel_size = 0
-#     train_dataset = Deal_Dataset_A9A(path + '/dataset/A9A/a9a_data/a9a.txt', is_train=True)
-#     test_dataset = Deal_Dataset_A9A(path + '/dataset/A9A/a9a_data/a9a.t', is_train=False)
-#     self._init_train_dataloader_(train_dataset)
-#     self._init_test_dataloader_(test_dataset)
-
-# elif args.data_set == 'W8A':
-#     self.class_num = 2
-#     self.feature_size = 300
-#     self.channel_size = 0
-#     train_dataset = Deal_Dataset_W8A(path + '/dataset/W8A/w8a_data/w8a.txt')
-#     test_dataset = Deal_Dataset_W8A(path + '/dataset/W8A/w8a_data/w8a.t')
-#     self._init_train_dataloader_(train_dataset)
-#     self._init_test_dataloader_(test_dataset)
-
-# elif args.data_set == 'FEMNIST':
-#     self.class_num = 10
-#     self.feature_size = 784
-#     self.channel_size = 1
-#     train_dataset = Deal_Dataset_FEMNIST(data_file_path=path + '/dataset/FEMNIST/femnist_data/training.pt',
-#                                          transform=)
-#     test_dataset = Deal_Dataset_FEMNIST(data_file_path=path + '/dataset/FEMNIST/femnist_data/test.pt',
-#                                         transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]))
-#     self._init_train_dataloader_(train_dataset)
-#     self._init_test_dataloader_(test_dataset)
-# else:
-#     raise Exception(f"unkonw data_set: {args.data_set}")
