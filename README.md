@@ -29,7 +29,7 @@ We select some important files for detailed description.
 
 ```python
 |-- LightFed # experiments for baselines, FedMD-CG and datasets
-    |-- experiments/ #
+    |-- experiments/ 
         |-- datasets/ 
             |-- data_distributer.py/  # the load datasets,including MNIST, EMNIST, FMNSIT and CIFAR-10
         |-- horizontal/ ## FedMD-CG and baselines
